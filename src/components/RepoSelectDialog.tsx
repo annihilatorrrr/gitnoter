@@ -14,6 +14,8 @@ import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { APIStatus, APIStatusType } from '../reducer/common';
 import { getUserReposAsync, saveDefaultRepoAsync, selectPreferenceAPIStatus, selectUserRepos } from '../reducer/preferenceSlice';
 import { getUserProfileAsync } from '../reducer/userSlice';
+import Collapse from '@mui/material/Collapse';
+import Alert from '@mui/material/Alert';
 
 interface Props {
   defaultRepo?: string
@@ -35,9 +37,13 @@ const RepoSelectDialog: React.FC<Props> = ({ open, setOpen, defaultRepo }): Reac
   const apiStatus = useAppSelector(selectPreferenceAPIStatus);
 
   const [repoName, setDefaultRepoName] = React.useState<string>();
+  const [alertOpen, setDefaultAlertOpen] = React.useState<boolean>();
 
   const handleChange = (event: SelectChangeEvent<typeof repoName>) => {
     setDefaultRepoName(String(event.target.value) || '');
+
+    const visibility = repos.filter(r => r.name === String(event.target.value))[0]['visibility']
+    visibility === 'public' && setDefaultAlertOpen(true) || setDefaultAlertOpen(false);
   }
 
   const handleSave = async () => {
@@ -63,6 +69,9 @@ const RepoSelectDialog: React.FC<Props> = ({ open, setOpen, defaultRepo }): Reac
             <Select autoWidth labelId="notes-repo-select-label" value={repoName || defaultRepo} onChange={handleChange} disabled={isLoading(apiStatus)} label="Notes Repository">
               {repos.map(r => <MenuItem key={r.name} value={r.name}>{r.name} (<SourceBranch sx={{ verticalAlign: 'middle' }} fontSize='inherit' /> {r.default_branch || 'main'})</MenuItem>)}
             </Select>
+            <Collapse in={alertOpen}>
+                <Alert sx={{ mt:2 }} severity="warning">You've selected a public repository. Notes could be accessed publicly.</Alert>
+            </Collapse>
           </FormControl>
         </Box>
       </DialogContent>
